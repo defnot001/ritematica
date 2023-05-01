@@ -1,6 +1,10 @@
 use crate::BlockState;
 use std::collections::HashMap;
 
+pub trait BlockStatePattern {
+    fn matches(&self, block_state: &BlockState) -> bool;
+}
+
 #[derive(Debug)]
 pub struct BlockStateBuilder {
     name: String,
@@ -47,10 +51,36 @@ impl BlockStateBuilder {
 }
 
 impl BlockState {
+    /// Returns the name of the block state.
+    /// If you want to modify the name, use [`set_name`](#method.set_name) instead.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let block_state = ...; // Load or create a BlockState
+    /// let name = block_state.get_name();
+    /// ```
+    ///
+    /// # Returns
+    ///
+    /// The name of the block state
     pub fn get_name(&self) -> &str {
         &self.name
     }
 
+    /// Returns a reference to the properties of the block state.
+    /// If you want to modify the properties, use [`set_properties`](#method.set_properties) or [`add_properties`](#method.add_properties) instead.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let block_state = ...; // Load or create a BlockState
+    /// let properties = block_state.get_properties();
+    /// ```
+    ///
+    /// # Returns
+    ///
+    /// A reference to the properties of the block state
     pub fn get_properties(&self) -> &HashMap<String, String> {
         &self.properties
     }
@@ -136,5 +166,20 @@ impl BlockState {
     /// If you want to remove all properties, use [`clear_properties`](#method.clear_properties) instead.
     pub fn remove_property(&mut self, property: impl Into<String>) {
         self.properties.remove(&property.into());
+    }
+}
+
+impl BlockStatePattern for BlockState {
+    fn matches(&self, block_state: &BlockState) -> bool {
+        self == block_state
+    }
+}
+
+impl<T> BlockStatePattern for T
+where
+    T: Fn(&BlockState) -> bool,
+{
+    fn matches(&self, block_state: &BlockState) -> bool {
+        self(block_state)
     }
 }

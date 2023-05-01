@@ -1,4 +1,7 @@
-use crate::structure::{BlockState, Coordinates, Region};
+use crate::{
+    block::{self, BlockStatePattern},
+    structure::{BlockState, Coordinates, Region},
+};
 
 const BIT_TO_LONG_SHIFT: u8 = 6; //log2(64)
 
@@ -25,13 +28,13 @@ impl Region {
     /// * A reference to the `BlockState` at the specified position within the region
     pub fn get_block(&self, position: impl Into<Coordinates>) -> &BlockState {
         let position = position.into();
-        let index = self.get_3d_index(position);
+        let block_index = self.get_3d_index(position);
 
         let required_bits = Self::calc_required_bits(&self.block_state_palette);
 
-        let mask = (1 << required_bits) - 1;
+        let bitmask = (1 << required_bits) - 1;
 
-        let palette_index = self.get_palette_index(index, required_bits, mask);
+        let palette_index = self.get_palette_index(block_index, required_bits, bitmask);
 
         &self.block_state_palette[palette_index as usize]
     }
@@ -126,6 +129,52 @@ impl Region {
         );
     }
 
+    /// Returns an iterator over the coordinates of the given block state within the region.
+    ///
+    /// This function takes a `BlockState` and returns an iterator over the `Coordinates` of all occurrences of the given
+    /// block state within the region.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let region = ...; // Load or create a Region
+    /// let block_state = ...; // Define a BlockState
+    /// let positions = region.find_block_positions(&block_state);
+    /// for position in positions {
+    ///     println!("Found block state at position: {:?}", position);
+    /// }
+    /// ```
+    ///
+    /// # Arguments
+    ///
+    /// * `block_state` - A reference to the `BlockState` to find the positions of within the region
+    ///
+    /// # Returns
+    ///
+    /// * An iterator over the `Coordinates` of the occurrences of the given block state within the region
+    pub fn find_block_positions(
+        &self,
+        block_state: &impl BlockStatePattern,
+    ) -> impl Iterator<Item = Coordinates> {
+        let mut matching = Vec::new();
+
+        for y in 0..self.size.y.abs() {
+            for z in 0..self.size.z.abs() {
+                for x in 0..self.size.x.abs() {
+                    let coords = Coordinates::from((x, y, z));
+
+                    let block = self.get_block(coords);
+
+                    if block_state.matches(block) {
+                        matching.push(coords);
+                    }
+                }
+            }
+        }
+
+        matching.into_iter()
+    }
+
     /// Calculates the number of bits required to represent block states in the palette.
     ///
     /// Given a palette of `BlockState`s, this function calculates the minimum number of bits needed to represent
@@ -171,7 +220,9 @@ impl Region {
     /// # Returns
     ///
     /// * The linear index of the block with the given 3D coordinates within the region, as a `u64`
-    fn get_3d_index(&self, coords: Coordinates) -> u64 {
+    fn get_3d_index(&self, coords: impl Into<Coordinates>) -> u64 {
+        let coords = coords.into();
+
         // check that the coordinates are withoin the bounds of the region
         assert!(coords.x >= 0 && coords.x < self.size.x.abs());
         assert!(coords.y >= 0 && coords.y < self.size.y.abs());
@@ -201,12 +252,13 @@ impl Region {
     ///
     /// The palette index corresponding to the given block index as a `u32`
     fn get_palette_index(&self, block_index: u64, required_bits: u64, bitmask: u32) -> u32 {
-        let bit_position = block_index * required_bits;
-        let word_index = (bit_position >> BIT_TO_LONG_SHIFT) as usize;
+        println!("block_index: {block_index}, required_bits: {required_bits}, bitmask: {bitmask}");
 
+        let bit_index = block_index * required_bits;
+        let word_index = (bit_index >> BIT_TO_LONG_SHIFT) as usize;
         let end_word_index =
             (((block_index + 1) * required_bits - 1) >> BIT_TO_LONG_SHIFT) as usize;
-        let index_in_word = (bit_position ^ ((word_index as u64) << BIT_TO_LONG_SHIFT)) as u8;
+        let index_in_word = (bit_index ^ ((word_index as u64) << BIT_TO_LONG_SHIFT)) as u8;
 
         if word_index == end_word_index {
             (self.block_states[word_index] >> index_in_word) as u32 & bitmask
@@ -271,7 +323,7 @@ impl Region {
         new_required_bits: u64,
         new_bitmask: u32,
     ) {
-        let volume = self.size.x.abs() as u64 * self.size.y.abs() as u64 * self.size.z.abs() as u64;
+        let volume = self.calc_volume();
         let required_bits_per_block = (volume * new_required_bits + 63) >> BIT_TO_LONG_SHIFT; // rounding up
 
         let mut new_blockstates: Vec<i64> = vec![0; required_bits_per_block as usize];
@@ -289,5 +341,9 @@ impl Region {
         }
 
         self.block_states = new_blockstates;
+    }
+
+    fn calc_volume(&self) -> u64 {
+        self.size.x.abs() as u64 * self.size.y.abs() as u64 * self.size.z.abs() as u64
     }
 }

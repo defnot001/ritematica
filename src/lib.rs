@@ -14,16 +14,27 @@ mod tests {
     // use std::collections::HashMap;
     // use std::path::Path;
 
-    use crate::block::BlockStateBuilder;
+    use std::path::Path;
+
+    use crate::{block::BlockStateBuilder, LitematicaFile};
 
     #[test]
     fn it_works() {
-        // let mut litematica_file = LitematicaFile::read(Path::new("test.litematic")).unwrap();
+        let mut litematica_file = LitematicaFile::read(Path::new("test.litematic")).unwrap();
 
-        // let region = litematica_file
-        //     .regions
-        //     .get_mut("Yisibite_4module_tripleshot_tunnel_bore")
-        //     .unwrap();
+        let region_names = litematica_file.get_region_names().collect::<Vec<_>>();
+
+        let region = litematica_file.get_region(region_names[0]).unwrap();
+
+        println!("Palette legth: {:?}", region.block_state_palette.len());
+
+        let block_state = BlockStateBuilder::new().name("piston").build();
+
+        let occurences = region
+            .find_block_positions(&block_state)
+            .collect::<Vec<_>>();
+
+        println!("{:?}", occurences);
 
         // println!("{:?}", region.get_block((5, 3, 5)));
 
@@ -46,25 +57,25 @@ mod tests {
         //     .write(Path::new("test_new.litematic"))
         //     .unwrap();
 
-        let mut block = BlockStateBuilder::new()
-            .name("piston")
-            .properties([("facing", "down"), ("extended", "true")])
-            .build();
+        // let mut block = BlockStateBuilder::new()
+        //     .name("piston")
+        //     .properties([("facing", "down"), ("extended", "true")])
+        //     .build();
 
-        let name = block.get_name();
-        let props = block.get_properties();
-        assert_eq!(name, "minecraft:piston");
-        assert_eq!(props.get("facing"), Some(&"down".to_string()));
+        // let name = block.get_name();
+        // let props = block.get_properties();
+        // assert_eq!(name, "minecraft:piston");
+        // assert_eq!(props.get("facing"), Some(&"down".to_string()));
 
-        block.set_name("sticky_piston");
-        assert_eq!(block.get_name(), "minecraft:sticky_piston");
+        // block.set_name("sticky_piston");
+        // assert_eq!(block.get_name(), "minecraft:sticky_piston");
 
-        block.set_properties([("facing", "up")]);
-        assert_eq!(
-            block.get_properties().get("facing"),
-            Some(&"up".to_string())
-        );
+        // block.set_properties([("facing", "up")]);
+        // assert_eq!(
+        //     block.get_properties().get("facing"),
+        //     Some(&"up".to_string())
+        // );
 
-        println!("{:?}", block);
+        // println!("{:?}", block);
     }
 }

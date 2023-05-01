@@ -86,7 +86,7 @@ pub struct Entity {
     pub invulnerable: bool,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Coordinates {
     pub x: i32,
     pub y: i32,
