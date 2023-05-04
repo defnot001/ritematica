@@ -11,6 +11,10 @@ use crate::structure::{LitematicaFile, Region};
 impl LitematicaFile {
     /// Reads a `Litematica` file from the given path.
     ///
+    /// # Arguments
+    ///
+    /// * `path` - The path to the file.
+    ///
     /// # Errors
     ///
     /// Returns an error if the file cannot be opened or deserialized.
@@ -30,6 +34,10 @@ impl LitematicaFile {
     /// Writes a `Litematica` file to the given path.
     ///
     /// Depending on the platform, this function may fail if the full directory `path` does not exist.
+    ///
+    /// # Arguments
+    ///
+    /// * `path` - The path where the file should be written to.
     ///
     /// # Errors
     ///
@@ -115,6 +123,10 @@ impl LitematicaFile {
     /// Returns an `Option` containing a reference to the `region` with the given name.
     /// If the region does not exist, `None` is returned.
     ///
+    /// # Arguments
+    ///
+    /// * `name` - The name of the region.
+    ///
     /// # Examples
     /// ```
     /// use ritematica::LitematicaFile;
@@ -135,6 +147,10 @@ impl LitematicaFile {
     /// Returns an `Option` containing a mutable reference to the `region` with the given name.
     /// If the region does not exist, `None` is returned.
     ///
+    /// # Arguments
+    ///
+    /// * `name` - The name of the region.
+    ///
     /// # Examples
     /// ```
     /// use ritematica::LitematicaFile;
@@ -154,6 +170,11 @@ impl LitematicaFile {
 
     /// Renames a `region` with the given `old_name` to the given `new_name`.
     /// If the region does not exist, nothing happens.
+    ///
+    /// # Arguments
+    ///
+    /// * `old_name` - The name of the region to rename.
+    /// * `new_name` - The new name of the region.
     ///
     /// # Examples
     /// ```
