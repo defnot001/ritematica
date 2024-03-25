@@ -1,31 +1,11 @@
 use crate::{
-    block::{self, BlockStatePattern},
+    block::BlockStatePattern,
     structure::{BlockState, Coordinates, Region},
 };
 
 const BIT_TO_LONG_SHIFT: u8 = 6; //log2(64)
 
 impl Region {
-    /// Retrieves the block state at the specified position within the region.
-    ///
-    /// This function takes a position which can be converted into `Coordinates` and returns a reference to the `BlockState`
-    /// at that position within the region.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// let region = ...; // Load or create a Region
-    /// let block = region.get_block((3, 5, 7));
-    /// println!("Block state at position (3, 5, 7): {:?}", block);
-    /// ```
-    ///
-    /// # Arguments
-    ///
-    /// * `position` - A value that can be converted into `Coordinates` representing the position of the block within the region
-    ///
-    /// # Returns
-    ///
-    /// * A reference to the `BlockState` at the specified position within the region
     pub fn get_block(&self, position: impl Into<Coordinates>) -> &BlockState {
         let position = position.into();
         let block_index = self.get_3d_index(position);
@@ -39,27 +19,6 @@ impl Region {
         &self.block_state_palette[palette_index as usize]
     }
 
-    /// Retrieves the block state as mutable at the specified position within the region.
-    ///
-    /// This function takes a position which can be converted into `Coordinates` and returns a reference to the `BlockState`
-    /// at that position within the region.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// let region = ...; // Load or create a Region
-    /// let block = region.get_block_mut((3, 5, 7));
-    /// block.set_name("stone");
-    /// println!("Block state at position (3, 5, 7): {:?}", block);
-    /// ```
-    ///
-    /// # Arguments
-    ///
-    /// * `position` - A value that can be converted into `Coordinates` representing the position of the block within the region
-    ///
-    /// # Returns
-    ///
-    /// * A mutable reference to the `BlockState` at the specified position within the region
     pub fn get_block_mut(&mut self, position: impl Into<Coordinates>) -> &mut BlockState {
         let position = position.into();
         let index = self.get_3d_index(position);
@@ -73,23 +32,6 @@ impl Region {
         &mut self.block_state_palette[palette_index as usize]
     }
 
-    /// Sets the block state at the specified position within the region.
-    ///
-    /// This function takes a position which can be converted into `Coordinates` and a `BlockState` to be set at that position
-    /// within the region.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// let mut region = ...; // Load or create a mutable Region
-    /// let new_block = BlockState { name: "minecraft:stone".to_string(), properties: HashMap::new() };
-    /// region.set_block((3, 5, 7), new_block);
-    /// ```
-    ///
-    /// # Arguments
-    ///
-    /// * `position` - A value that can be converted into `Coordinates` representing the position of the block within the region
-    /// * `block` - The `BlockState` to be set at the specified position within the region
     pub fn set_block(&mut self, position: impl Into<Coordinates>, block: BlockState) {
         let position = position.into();
         let index = self.get_3d_index(position);
@@ -129,29 +71,6 @@ impl Region {
         );
     }
 
-    /// Returns an iterator over the coordinates of the given block state within the region.
-    ///
-    /// This function takes a `BlockState` and returns an iterator over the `Coordinates` of all occurrences of the given
-    /// block state within the region.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// let region = ...; // Load or create a Region
-    /// let block_state = ...; // Define a BlockState
-    /// let positions = region.find_block_positions(&block_state);
-    /// for position in positions {
-    ///     println!("Found block state at position: {:?}", position);
-    /// }
-    /// ```
-    ///
-    /// # Arguments
-    ///
-    /// * `block_state` - A reference to the `BlockState` to find the positions of within the region
-    ///
-    /// # Returns
-    ///
-    /// * An iterator over the `Coordinates` of the occurrences of the given block state within the region
     pub fn find_block_positions(
         &self,
         block_state: &impl BlockStatePattern,
@@ -175,52 +94,11 @@ impl Region {
         matching.into_iter()
     }
 
-    /// Calculates the number of bits required to represent block states in the palette.
-    ///
-    /// Given a palette of `BlockState`s, this function calculates the minimum number of bits needed to represent
-    /// each block state in the palette, with a minimum of 2 bits.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// let palette = vec![block_state1, block_state2, block_state3];
-    /// let required_bits = calc_required_bits(&palette);
-    /// println!("Required bits for the palette: {}", required_bits);
-    /// ```
-    ///
-    /// # Arguments
-    ///
-    /// * `palette` - A reference to a `Vec<BlockState>` representing the palette of block states
-    ///
-    /// # Returns
-    ///
-    /// * The minimum number of bits required to represent the block states in the palette, as a `u64`
-    fn calc_required_bits(palette: &Vec<BlockState>) -> u64 {
+    pub(crate) fn calc_required_bits(palette: &Vec<BlockState>) -> u64 {
         palette.len().next_power_of_two().trailing_zeros().max(2) as u64
     }
 
-    /// Calculates the linear index of a block within the region given its 3D coordinates.
-    ///
-    /// This function takes a `Coordinates` value representing the position of a block within the region and returns
-    /// a linear index that can be used to access the block's state in the region's data structures.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// let region = ...; // Load or create a Region
-    /// let coords = Coordinates { x: 1, y: 2, z: 3 };
-    /// let index = region.get_3d_index(coords);
-    /// println!("Linear index for position (1, 2, 3): {}", index);
-    /// ```
-    ///
-    /// # Arguments
-    ///
-    /// * `coords` - A `Coordinates` value representing the position of a block within the region
-    ///
-    /// # Returns
-    ///
-    /// * The linear index of the block with the given 3D coordinates within the region, as a `u64`
-    fn get_3d_index(&self, coords: impl Into<Coordinates>) -> u64 {
+    pub(crate) fn get_3d_index(&self, coords: impl Into<Coordinates>) -> u64 {
         let coords = coords.into();
 
         // check that the coordinates are withoin the bounds of the region
@@ -234,26 +112,18 @@ impl Region {
         let z = coords.z as u64;
 
         // calculate the linear index
-        let size_x = self.size.x.abs() as u64;
-        let size_layer = size_x * self.size.z.abs() as u64;
+        let size_x = self.size.x.unsigned_abs() as u64;
+        let size_layer = size_x * self.size.z.unsigned_abs() as u64;
 
         y * size_layer + z * size_x + x
     }
 
-    /// Returns the palette index for a given block_index, required_bits and bitmask.
-    ///
-    /// # Arguments
-    ///
-    /// * `block_index` - The block index to retrieve the palette index for
-    /// * `required_bits` - The number of bits used for each block state in the block states array
-    /// * `bitmask` - The bitmask used to isolate the desired bits from the block states array
-    ///
-    /// # Returns
-    ///
-    /// The palette index corresponding to the given block index as a `u32`
-    fn get_palette_index(&self, block_index: u64, required_bits: u64, bitmask: u32) -> u32 {
-        println!("block_index: {block_index}, required_bits: {required_bits}, bitmask: {bitmask}");
-
+    pub(crate) fn get_palette_index(
+        &self,
+        block_index: u64,
+        required_bits: u64,
+        bitmask: u32,
+    ) -> u32 {
         let bit_index = block_index * required_bits;
         let word_index = (bit_index >> BIT_TO_LONG_SHIFT) as usize;
         let end_word_index =
@@ -263,21 +133,13 @@ impl Region {
         if word_index == end_word_index {
             (self.block_states[word_index] >> index_in_word) as u32 & bitmask
         } else {
-            let first_bits = 64 - index_in_word;
-            ((self.block_states[word_index] >> index_in_word) as u32 & bitmask)
+            let first_bits = 64 - index_in_word; // 2
+
+            ((self.block_states[word_index] as u64 >> index_in_word) as u32 & bitmask)
                 | ((self.block_states[end_word_index] << first_bits) as u32 & bitmask)
         }
     }
 
-    /// Sets the palette index for a given block index.
-    ///
-    /// # Arguments
-    ///
-    /// * `block_states` - The block states array to set the palette index in
-    /// * `block_index` - The block index to set the palette index for
-    /// * `value` - The palette index to set
-    /// * `required_bits` - The number of bits used for each block state in the block states array
-    /// * `bitmask` - The bitmask used to isolate the desired bits from the block states array
     fn set_block_index(
         block_states: &mut [i64],
         block_index: u64,
@@ -307,15 +169,6 @@ impl Region {
         }
     }
 
-    /// Resizes the block states array to accommodate a new number of bits per block, updating the palette indices accordingly.
-    /// This function adjusts the internal storage of block palette indices when the number of bits required to represent the indices changes (e.g., due to a change in the palette size).
-    ///
-    /// # Arguments
-    ///
-    /// * `old_required_bits` - The number of bits used for each block state in the block states array before the resize
-    /// * `old_bitmask` - The bitmask used to isolate the desired bits from the block states array before the resize
-    /// * `new_required_bits` - The number of bits used for each block state in the block states array after the resize
-    /// * `new_bitmask` - The bitmask used to isolate the desired bits from the block states array after the resize
     fn resize_block_states(
         &mut self,
         old_required_bits: u64,
@@ -344,6 +197,69 @@ impl Region {
     }
 
     fn calc_volume(&self) -> u64 {
-        self.size.x.abs() as u64 * self.size.y.abs() as u64 * self.size.z.abs() as u64
+        self.size.x.unsigned_abs() as u64
+            * self.size.y.unsigned_abs() as u64
+            * self.size.z.unsigned_abs() as u64
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{resource_location::ResourceLocation, structure::LitematicaFile};
+    use std::collections::HashMap;
+
+    use super::*;
+
+    #[test]
+    fn get_3d_index() {
+        let litematic = LitematicaFile::read("test.litematic").unwrap();
+        let region = litematic.get_region("test").unwrap(); // region size: 31x9x29
+
+        assert_eq!(region.get_3d_index((0, 0, 0)), 0);
+        assert_eq!(region.get_3d_index((30, 0, 0)), 30);
+        assert_eq!(region.get_3d_index((0, 8, 0)), 31 * 29 * 8);
+    }
+
+    #[test]
+    fn get_palette_index() {
+        let litematic = LitematicaFile::read("test.litematic").unwrap();
+        let region = litematic.get_region("test").unwrap(); // region size: 31x9x29
+
+        let _palette_len = region.block_state_palette.len(); // 25
+
+        let required_bits = Region::calc_required_bits(&region.block_state_palette); // 5
+        let bitmask = (1 << required_bits) - 1; // 31
+
+        let block_index = region.get_3d_index((0, 2, 0)); // 31 * 29 * 2 = 1.798
+        let palette_index = region.get_palette_index(block_index, required_bits, bitmask);
+        assert_eq!(palette_index, 0);
+        assert_eq!(
+            region.block_state_palette[palette_index as usize].name,
+            ResourceLocation::minecraft("air")
+        );
+
+        let block_index = region.get_3d_index((2, 4, 2)); // 3660
+        let palette_index = region.get_palette_index(block_index, required_bits, bitmask);
+
+        assert_eq!(palette_index, 24);
+        assert_eq!(
+            region.block_state_palette[palette_index as usize].name,
+            ResourceLocation::minecraft("powered_rail")
+        );
+        assert_eq!(
+            region.block_state_palette[palette_index as usize].properties,
+            HashMap::from([
+                ("shape".to_string(), "north_south".to_string()),
+                ("powered".to_string(), "true".to_string()),
+                ("waterlogged".to_string(), "false".to_string())
+            ])
+        );
+    }
+
+    #[test]
+    fn idk_how_this_works() {
+        let litematic = LitematicaFile::read("test.litematic").unwrap();
+
+        println!("{:#?}", litematic.get_region("test"));
     }
 }

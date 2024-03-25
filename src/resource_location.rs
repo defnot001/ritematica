@@ -14,7 +14,6 @@ use crate::error::ParseError;
 /// let resource_location = ResourceLocation::new("create", "mechanical_drill");
 /// assert_eq!(resource_location.get_namespace(), "create");
 /// assert_eq!(resource_location.get_path(), "mechanical_drill");
-/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct ResourceLocation {
     pub(crate) namespace: String,

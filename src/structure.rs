@@ -1,7 +1,9 @@
+use nbt::Value;
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 
 use std::collections::HashMap;
+
+use crate::resource_location::ResourceLocation;
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
@@ -27,10 +29,10 @@ pub struct Region {
     pub(crate) block_states: Vec<i64>,
 }
 
-#[derive(Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "PascalCase")]
 pub struct BlockState {
-    pub(crate) name: String,
+    pub(crate) name: ResourceLocation,
 
     #[serde(default)]
     #[serde(skip_serializing_if = "HashMap::is_empty")]
